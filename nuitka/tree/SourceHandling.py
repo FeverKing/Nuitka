@@ -17,6 +17,7 @@ from nuitka.containers.OrderedSets import OrderedSet
 from nuitka.format.FileFormatting import formatC
 from nuitka.options.Options import (
     shallGenerateReadableCode,
+    shallKeepBackendObjects,
     shallShowSourceModifications,
 )
 from nuitka.plugins.Hooks import onModuleSourceCode
@@ -33,6 +34,7 @@ from nuitka.utils.FileOperations import (
     hasFilenameExtension,
     putTextFileContents,
     stripFileContentsBOM,
+    writeTextFileIfChanged,
 )
 from nuitka.utils.ModuleNames import ModuleName, checkModuleName
 from nuitka.utils.Shebang import getShebangFromSource, parseShebang
@@ -335,11 +337,20 @@ def readSourceLines(source_ref):
 
 
 def writeSourceCode(filename, source_code, logger, assume_yes_for_downloads):
-    # Prevent accidental overwriting. When this happens the collision detection
-    # or something else has failed.
-    assert not os.path.isfile(filename), filename
+    # With object-level incremental backend, existing files are expected and are
+    # only rewritten when contents change so mtime/Scons can skip recompiles.
+    if shallKeepBackendObjects() and os.path.isfile(filename):
+        writeTextFileIfChanged(
+            filename=filename, contents=source_code, encoding="latin1"
+        )
+    else:
+        # Prevent accidental overwriting. When this happens the collision
+        # detection or something else has failed.
+        assert not os.path.isfile(filename), filename
 
-    putTextFileContents(filename=filename, contents=source_code, encoding="latin1")
+        putTextFileContents(
+            filename=filename, contents=source_code, encoding="latin1"
+        )
 
     if hasFilenameExtension(filename, (".c", ".h")) and shallGenerateReadableCode():
         formatC(

@@ -1214,6 +1214,7 @@ def createNuitkaSconsEnvironment(needs_source_dir=True):
     enableSconsProgressBar(progress_bar)
 
     disable_ccache = getArgumentBool("disable_ccache", False)
+    keep_backend_objects = getArgumentBool("keep_backend_objects", False)
 
     # Patch the compiler detection.
     Environment.Detect = getEnhancedToolDetect()
@@ -1276,6 +1277,7 @@ def createNuitkaSconsEnvironment(needs_source_dir=True):
     env.onefile_windows_static_runtime = onefile_windows_static_runtime
     env.cf_protection = cf_protection
     env.disable_ccache = disable_ccache
+    env.keep_backend_objects = keep_backend_objects
 
     if env.the_compiler is None or getExecutablePath(env.the_compiler, env=env) is None:
         raiseNoCompilerFoundErrorExit()
